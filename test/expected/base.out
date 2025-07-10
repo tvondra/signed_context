@@ -1,0 +1,59 @@
+\set ECHO none
+-- generate new keypair
+SELECT * FROM signed_context_generate_keys() \gset
+-- generate a valid signed context
+SELECT signed_context_sign(:'skey', 'a:1:b:2:c:3') AS context \gset
+-- try to set it without the public key installed
+SET signed_context.context = :'context';
+WARNING:  public key is not initialized
+ERROR:  invalid signature
+-- set it for the database
+ALTER DATABASE :DBNAME SET signed_context.key = :'pkey';
+-- reconnect, to activate the database key
+\connect
+-- verify the context (function call forces loading the library, which
+-- is what sets the check/assign hooks we need)
+SELECT signed_context_verify(:'context');
+ signed_context_verify 
+-----------------------
+ t
+(1 row)
+
+-- some bogus contexts first
+SET signed_context.context = 'blahblah';
+WARNING:  invalid format: missing separator ':'
+ERROR:  invalid signature
+SET signed_context.context = 'foo:bar';
+WARNING:  failed to decode signature (invalid length or not valid base64)
+ERROR:  invalid signature
+SET signed_context.context = 'foo:bar:baz';
+WARNING:  failed to decode signature (invalid length or not valid base64)
+ERROR:  invalid signature
+SHOW signed_context.context;
+ signed_context.context 
+------------------------
+ 
+(1 row)
+
+-- now the correctly signed context
+SET signed_context.context = :'context';
+SHOW signed_context.context;
+ signed_context.context 
+------------------------
+ a:1:b:2:c:3
+(1 row)
+
+-- existing key
+SELECT signed_context_get('a');
+ signed_context_get 
+--------------------
+ 1
+(1 row)
+
+-- missing key
+SELECT signed_context_get('d');
+ signed_context_get 
+--------------------
+ 
+(1 row)
+

@@ -1,0 +1,4 @@
+# signed context
+comment = 'Provides implementation of signed context.'
+default_version = '1.0.0'
+relocatable = true
