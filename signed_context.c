@@ -353,7 +353,11 @@ signed_context_key_check_hook(char **newval, void **extra, GucSource source)
 	}
 
 	/* decode the key */
+#if PG_VERSION_NUM >= 160000
 	key = guc_malloc(LOG, crypto_sign_PUBLICKEYBYTES);
+#else
+	key = malloc(crypto_sign_PUBLICKEYBYTES);
+#endif
 	if (!key)
 	{
 		GUC_check_errmsg("failed to allocate memory for key: OOM");
