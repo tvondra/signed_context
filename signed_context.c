@@ -60,6 +60,8 @@
 PG_MODULE_MAGIC;
 #endif
 
+void _PG_init(void);
+
 /* the main context */
 static char *signed_context_key = NULL;
 static char *signed_context_string = NULL;
