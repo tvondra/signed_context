@@ -522,6 +522,11 @@ signed_context_str_check_hook(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
+	/*
+	 * FIXME this leaks memory (payload and the string copy for parsing), we
+	 * shoud either free this or pass it through extra to assign hook.
+	 */
+
 	return true;
 }
 
