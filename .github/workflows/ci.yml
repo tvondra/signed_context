@@ -16,5 +16,10 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
+      - name: Install required packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsodium-dev
+
       - name: Test on PostgreSQL ${{ matrix.pg }}
         run: pg-build-test
