@@ -418,7 +418,7 @@ signed_context_parse(char *str, int *nentries)
 {
 	int		cnt = 0;
 	int		maxcnt = 0;
-	char  **entries;
+	char  **entries = NULL;
 	char   *ptr,
 		   *endptr;
 
