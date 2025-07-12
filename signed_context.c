@@ -208,7 +208,8 @@ signed_context_sign(PG_FUNCTION_ARGS)
 	unsigned long long	mlen = strlen(msg);	/* exclude terminator */
 
 	/* secret key needs to be exactly crypto_sign_SECRETKEYBYTES bytes */
-	skeylen = pg_b64_decode(key, strlen(key), skey, crypto_sign_SECRETKEYBYTES);
+	skeylen = pg_b64_decode(key, strlen(key),
+						    (char *) skey, crypto_sign_SECRETKEYBYTES);
 	if (skeylen != crypto_sign_SECRETKEYBYTES)
 		elog(ERROR, "signature failed: invalid length of secret key");
 
@@ -234,7 +235,7 @@ signed_context_sign(PG_FUNCTION_ARGS)
 
 	/* encode the signature into the output buffer */
 	ptr = res;
-	ptr += pg_b64_encode(sig, siglen, ptr, pg_b64_enc_len(siglen));
+	ptr += pg_b64_encode((char *) sig, siglen, ptr, pg_b64_enc_len(siglen));
 
 	/* pg_b64_encode() shouldn't return -1, the buffer is large enough */
 	Assert(res < ptr);
@@ -312,10 +313,10 @@ signed_context_generate_keys(PG_FUNCTION_ARGS)
 	/* seems this only ever returns 0 */
 	crypto_sign_keypair(pkey, skey);
 
-	if (pg_b64_encode(pkey, crypto_sign_PUBLICKEYBYTES, pkey_enc, pkey_len) == -1)
+	if (pg_b64_encode((char *) pkey, crypto_sign_PUBLICKEYBYTES, pkey_enc, pkey_len) == -1)
 		elog(ERROR, "failed encoding public key: too long");
 
-	if (pg_b64_encode(skey, crypto_sign_SECRETKEYBYTES, skey_enc, skey_len) == -1)
+	if (pg_b64_encode((char *) skey, crypto_sign_SECRETKEYBYTES, skey_enc, skey_len) == -1)
 		elog(ERROR, "failed encoding secret key: too long");
 
 	tupdesc = signed_context_generate_keys_tupdesc();
@@ -364,7 +365,8 @@ signed_context_key_check_hook(char **newval, void **extra, GucSource source)
 	 * should not be longer than crypto_sign_PUBLICKEYBYTES, thanks to
 	 * the earlier check.
 	 */
-	keylen = pg_b64_decode(*newval, strlen(*newval), key, crypto_sign_PUBLICKEYBYTES);
+	keylen = pg_b64_decode(*newval, strlen(*newval),
+						   (char *) key, crypto_sign_PUBLICKEYBYTES);
 	if (keylen == -1)
 	{
 		GUC_check_errmsg("failed to set public key: decoding failed");
@@ -637,7 +639,7 @@ verify_signature(char *msg, char **payload)
 	}
 
 	/* decode the signature part (it can be shorter) */
-	if (pg_b64_decode(msg, (sep - msg), sig, crypto_sign_BYTES) == -1)
+	if (pg_b64_decode(msg, (sep - msg), (char *) sig, crypto_sign_BYTES) == -1)
 	{
 		elog(WARNING, "failed to decode signature (invalid length or not valid base64)");
 		return false;
