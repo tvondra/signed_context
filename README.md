@@ -263,6 +263,11 @@ of vulnerability), he could modify those two values.
 But with this kind of access to memory, the user could do anything to
 the server. The fact that it breaks the signed context is a detail.
 
+It might be possible to move the sensitive steps (signature checks and
+store of the key/context) to some sort of trusted enclave, like Intel
+SGX or ARM TrustZone. I haven't explored these options in detail, and
+I'm not sure how resilient it could be assuming C memory access.
+
 
 ## Possible improvements
 
@@ -297,6 +302,19 @@ connection timestamp, binding it to a particular connection. This would
 make it harder to use a leaked context. But it also requires some sort
 of automated context signing, because the contexts will be unique for
 connection.
+
+
+### challenge-response protocol
+
+A twist on set-once contexts could be a challenge-response protocol,
+i.e. the server generates a challenge, and the signed context would
+have to factor that into the signed context somehow. Imagine a random
+value as challenge, and the context would need to include that in the
+signature to prove knowledge of the secret key.
+
+This can be seen as an extension of additional information in the
+context, to bind it to a particular TCP connection. It also requires
+some sort of automated context signing.
 
 
 ### set key using security-definer function
